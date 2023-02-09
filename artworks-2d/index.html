@@ -1,0 +1,981 @@
+<head>
+  <style> body { margin: 0; } </style>
+   <script src="//unpkg.com/force-graph"></script>
+
+<!-- 
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="../people_network.js"></script>
+
+  --> 
+
+  <style>
+    body{
+      font-family: verdana;
+      color: #212427;
+    }
+    h1{
+      position: absolute;
+      left: 10px;
+      top: 0;
+      padding: 0;
+      margin: 0;
+
+    position: absolute;
+
+
+    text-transform: uppercase;
+    font-family: verdana;
+    font-size: 5em;
+    font-weight: 700;
+    color: #f5f5f5;
+    text-shadow: 1px 1px 1px #919191,
+        1px 2px 1px #919191,
+        1px 3px 1px #919191,
+        1px 4px 1px #919191,
+        1px 5px 1px #919191,
+        1px 6px 1px #919191,
+        1px 7px 1px #919191,
+        1px 8px 1px #919191,
+        1px 9px 1px #919191,
+        1px 10px 1px #919191,
+    1px 18px 6px rgba(16,16,16,0.4),
+    1px 22px 10px rgba(16,16,16,0.2),
+    1px 25px 35px rgba(16,16,16,0.2),
+    1px 30px 60px rgba(16,16,16,0.4);
+    transition-property: opacity;
+    transition-duration: 2.5s;
+
+
+    }
+
+    #app{
+      position: absolute;
+      left: 0;
+      top: 0;
+
+    }
+
+    #modal{
+
+/*background: rgb(221,221,221);
+background: linear-gradient(180deg, rgba(255,255,255,1) 27%, rgba(50,50,50,1) 100%);
+*/
+      width:90vw;
+      height: 90vh;
+      left:5vw;
+      top:5vh;
+      position: absolute;
+      box-shadow: -1px 14px 15px -3px rgba(0,0,0,0.46);
+      overflow: hidden;
+       border: solid 1px #212427;
+    }
+
+
+    .loading-gradient {
+      background: linear-gradient(-45deg, rgba(255,255,255,1), rgba(50,50,50,1), rgba(255,255,255,1), rgba(50,50,50,1));
+      background-size: 400% 400%;
+      animation: gradient 10s ease infinite;
+      height: 100vh;
+    }
+    .loaded-gradient{
+      background: linear-gradient(-45deg, rgba(255,255,255,1), rgba(50,50,50,1), rgba(255,255,255,1), rgba(50,50,50,1));
+      background-size: 400% 400%;
+      background-position: 16% 57%;
+    
+    }
+
+    @keyframes gradient {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+
+
+    #about{
+      display: flex;
+      padding: 1em;
+    }
+    .about-image img{
+      border-radius:120px;
+      object-fit: cover;
+      height: 120px;
+      flex-shrink: 1;
+    }
+    .about-title{
+      flex-grow: 1;
+      font-size: 3em;
+      align-items: center;
+      display: flex;
+      padding-left: 1em;
+    }
+    #about-content{
+      border-top:solid 1px #212427;
+
+      overflow: scroll;
+      padding: 0.5em;
+    }
+    .close-button{
+      float: right;
+      background-color: transparent;
+      border: none;
+    }
+
+    .close-button:hover{
+      cursor: pointer;
+      transform: translateY(5px);
+      transform: scale(0.9);
+    }
+    .about-back:hover svg{
+      cursor: pointer;
+      transform: translateY(5px);
+      transform: scale(0.9);
+    }
+
+
+    #about-content-names{
+      display: grid;
+      grid-template-columns: repeat(10,1fr);
+    justify-items: center;
+      grid-gap: 5px;
+      cursor: pointer;
+      padding-block: 2em;
+
+    }
+
+
+
+
+    .about-content-name{
+      width: 100px;
+
+
+    }
+    .about-content-name:hover{
+      transform: scale(1.25);
+      transition-duration: 500ms;
+    }
+
+
+
+    .about-content-name img{
+      width: 99px;
+      height: auto;
+      border-radius: 99px;
+    }
+    .about-content-name-label{
+      text-align: center;
+      background-color: rgba(0, 0, 0, 0.6);
+      border-radius: 8px;
+      color: white;
+      font-size: 0.8em;
+    }
+    .about-instructions{
+      margin-bottom: 1em;
+    }
+
+    a{
+      color: #212427;
+    }
+    a:visted{
+      color:#212427;
+    }
+    code{
+      display: block;
+      font-size: 1.25em;
+      background-color: whitesmoke;
+      padding: 0.25em;
+      border-top-left-radius: 1em;
+      border-top-right-radius: 1em;      
+    }
+    code span{
+      background-color: yellow;
+    }
+    .doc-link{
+      padding-left: 1em;
+    }
+
+    .text-block:last-of-type {
+      padding-bottom: 4em;
+    }
+    .expand{
+      padding-left: 0.5em;
+      font-weight: bold;
+
+
+    }
+  </style>
+  <!--<script src="../../dist/force-graph.js"></script>-->
+</head>
+
+<body>
+
+  <h1 id="title">Artworks </h1>
+  <div id="graph"></div>
+
+  <div id="app">
+
+
+  </div>
+
+
+
+
+
+  <script>
+
+
+    (async () => {
+
+
+      let sparql = `
+        select * { 
+          {select * where { 
+            ?artwork wdt:P1 wd:Q19073.
+            ?artwork wdt:P11 wd:Q19104.
+            ?artwork rdfs:label ?artworkLabel.
+          }}
+          
+
+          ?artwork wdt:P74 ?creator.
+          ?creator rdfs:label ?creatorLabel.
+          optional{
+            ?creator wdt:P3 ?creatorImg.
+          }  
+          
+          
+          optional{
+            ?artwork p:P75 ?contributorStatement.
+            ?contributorStatement ps:P75 ?contributor.
+            ?contributor rdfs:label ?contributorLabel.
+            
+            optional{
+              ?contributor wdt:P3 ?contributorImg.
+             } 
+            
+            optional{
+              ?contributorStatement pq:P117 ?role.
+              ?role rdfs:label ?roleLabel.
+            }
+          }
+          
+        }
+      `
+
+      let dataReq = await fetch('https://query.semlab.io/proxy/wdqs/bigdata/namespace/wdq/sparql?' + new URLSearchParams({
+          query: sparql
+      }), {headers: { 'Accept' : 'application/json'}})
+
+      let data = await dataReq.json()
+
+
+      let blocksByAssoicated = {}
+
+      let artworks = {}
+      let relationships = {}
+
+      for (let b of data.results.bindings){
+        console.log(b)
+        let artworkId = parseInt(b.artwork.value.split('/')[b.artwork.value.split('/').length-1].replace('Q',''))
+        console.log(artworkId)
+        if (!artworks[artworkId]){
+          artworks[artworkId] = {
+            id: artworkId,
+            label: b.artworkLabel.value,
+            contributors: {}
+          }
+        }
+
+        if (b.creator){
+          if (!artworks[artworkId].creator){
+            artworks[artworkId].creator = parseInt(b.creator.value.split('/')[b.creator.value.split('/').length-1].replace('Q',''))
+            artworks[artworkId].creatorLabel = b.creatorLabel.value
+            
+            if (b.creatorImg){
+              artworks[artworkId].creatorImg = b.creatorImg.value
+            }else{
+              artworks[artworkId].creatorImg = null
+            }
+          }
+        }
+
+        if (b.contributor){
+          let contributorId = parseInt(b.contributor.value.split('/')[b.contributor.value.split('/').length-1].replace('Q',''))
+          if (!artworks[artworkId].contributors[contributorId]){
+
+            artworks[artworkId].contributors[contributorId] = {
+              id: contributorId,
+              label: b.contributorLabel.value,
+              role:null,
+              img: null
+            }
+
+            if (b.role){
+              artworks[artworkId].contributors[contributorId].role = b.roleLabel.value
+            }
+            if (b.contributorImg){
+              artworks[artworkId].contributors[contributorId].img = b.contributorImg.value
+
+            }
+
+
+
+
+          }
+
+        }
+      }
+
+      let nodesAdded = {}
+      let linksAdded = {}
+     
+      let nodes = []
+      let links = []
+
+      for (let a in artworks){
+
+        a = artworks[a]
+
+        if (!nodesAdded[a.id]){
+          nodes.push({
+            id: a.id,
+            label: a.label,
+            type:"artwork"
+          })
+          nodesAdded[a.id] = true
+        }
+        
+        if (!nodesAdded[a.creator]){
+          nodes.push({
+            id: a.creator,
+            label: a.creatorLabel,
+            img:a.creatorImg,
+            type:"person"
+          })
+          nodesAdded[a.creator] = true
+        }
+        
+
+        let creatorToArt = `${a.creator}->${a.id}`
+        if (!linksAdded[creatorToArt]){
+          links.push({
+            source: a.creator,
+            target: a.id,
+            ref: "creator"
+          })
+          linksAdded[creatorToArt]=true
+        }
+
+        for (let con in a.contributors){
+
+          con = a.contributors[con]
+          if (!nodesAdded[con.id]){
+            nodes.push({
+              id: con.id,
+              label: con.label,
+              img:con.img,
+              type:"person"
+            })
+            nodesAdded[con.id] = true
+          }
+          let contribToArt = `${con.id}->${a.id}`
+          if (!linksAdded[contribToArt]){
+            links.push({
+              source: con.id,
+              target: a.id,
+              ref: (con.role) ? con.role : 'contributor'
+            })
+            linksAdded[contribToArt]=true
+          }
+
+
+        }
+
+
+
+      }
+
+
+      let allData = {nodes:nodes, links:links}
+
+      let zoomCount = 0
+      const personImg = new Image();
+      personImg.src = '../img/person.png';
+      const artworkImg = new Image();
+      artworkImg.src = '../img/artwork1.png';
+
+
+      let imgs = {}
+      let imgUrls = {}
+      let names = {}
+
+      for (let img of allData.nodes){
+        imgUrls[img.id] = img.img
+        names[img.id] = img.name
+        if (img.img){        
+          const imgEl = new Image();
+          imgEl.src = img.img;
+          imgs[img.id] = imgEl
+        }
+
+      }
+
+
+      console.log(imgs)
+
+      const gData = {
+        nodes: allData.nodes,
+        links: allData.links
+      };
+
+      const Graph = ForceGraph()
+        (document.getElementById('graph'))
+        .nodeCanvasObject((node, ctx, globalScale) => {
+
+
+
+
+          const size = 12;
+
+
+          if (node.img){
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, size/2, 0, 2 * Math.PI);         
+            ctx.clip();
+
+            ctx.drawImage(imgs[node.id], node.x - size / 2, node.y - size / 2, size, size);
+            ctx.restore();
+
+
+          }else{
+
+
+
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, size/2.5, 0, 2 * Math.PI);
+            ctx.fillStyle = "white";
+            ctx.fill();          
+            
+            if (node.type == 'artwork'){
+             ctx.drawImage(artworkImg, node.x - size / 2, node.y - size / 2, size, size);
+
+            }else{
+              
+              ctx.drawImage(personImg, node.x - size / 2, node.y - size / 2, size, size);
+
+            }
+
+
+
+            // ctx.fillStyle = 'blue';
+            // ctx.fillRect(node.x - size / 2, node.y - size / 2, size, size);
+          }
+                 
+
+          if (globalScale>3){
+
+            const label = node.label;
+            const fontSize = 12/globalScale;
+            ctx.font = `${fontSize}px Sans-Serif`;
+            const textWidth = ctx.measureText(label).width;
+            const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2); // some padding
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2 + size/2, ...bckgDimensions);
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'white';
+            ctx.fillText(label, node.x, node.y +  size/2);
+          }
+
+
+
+        })
+        .nodePointerAreaPaint((node, color, ctx) => {
+          const size = 12;
+          ctx.fillStyle =  color;
+          ctx.fillRect(node.x - size / 2, node.y - size / 2, size, size); // draw square as pointer trap
+        })
+        // .linkColor(() => 'whitesmoke')
+        
+        .linkDirectionalArrowLength(4)
+        .linkDirectionalArrowRelPos(0.9)
+        .linkCanvasObjectMode(() => 'after')
+        .linkCanvasObject((link, ctx) => {
+          const MAX_FONT_SIZE = 4;
+          const LABEL_NODE_MARGIN = Graph.nodeRelSize() * 1.5;
+
+          const start = link.source;
+          const end = link.target;
+
+          // ignore unbound links
+          if (typeof start !== 'object' || typeof end !== 'object') return;
+
+          // calculate label positioning
+          const textPos = Object.assign(...['x', 'y'].map(c => ({
+            [c]: start[c] + (end[c] - start[c]) / 2 // calc middle point
+          })));
+
+          const relLink = { x: end.x - start.x, y: end.y - start.y };
+
+          const maxTextLength = Math.sqrt(Math.pow(relLink.x, 2) + Math.pow(relLink.y, 2)) - LABEL_NODE_MARGIN * 2;
+
+          let textAngle = Math.atan2(relLink.y, relLink.x);
+          // maintain label vertical orientation for legibility
+          if (textAngle > Math.PI / 2) textAngle = -(Math.PI - textAngle);
+          if (textAngle < -Math.PI / 2) textAngle = -(-Math.PI - textAngle);
+
+          const label = link.ref;
+
+          // estimate fontSize to fit in link length
+          ctx.font = '1px Sans-Serif';
+          const fontSize = Math.min(MAX_FONT_SIZE, maxTextLength / ctx.measureText(label).width);
+          ctx.font = `${fontSize}px Sans-Serif`;
+          const textWidth = ctx.measureText(label).width;
+          const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2); // some padding
+
+          // draw text label (with background rect)
+          ctx.save();
+          ctx.translate(textPos.x, textPos.y);
+          ctx.rotate(textAngle);
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.fillRect(- bckgDimensions[0] / 2, - bckgDimensions[1] / 2, ...bckgDimensions);
+
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = 'darkgrey';
+          ctx.fillText(label, 0, 0);
+          ctx.restore();
+        })
+        .linkWidth(() => 1)
+        // .linkCurvature(() => 1)
+        .onNodeClick((node,event)=> {
+
+
+          window.open(`http://base.semlab.io/wiki/Item:Q${node.id}`, '_blank').focus();
+
+
+
+        })
+        .onZoom(()=>{
+          zoomCount++
+          if (zoomCount>2){          
+            document.getElementById('title').style.opacity=0;
+          }
+        })
+        
+        // .d3AlphaDecay(0.05)
+        .graphData(gData);
+
+
+
+
+    })();
+
+
+
+
+
+
+
+
+
+
+
+    // const { createApp } = Vue
+
+    // let vueApp = createApp({
+    //   data() {
+    //     return {
+    //       display:false,
+    //       pic:null,
+    //       name:null,
+    //       mainCount:'...',
+    //       modalInstructions: '',
+    //       blocksByAssoicated: [],
+    //       blocksByAssoicatedOld:[],
+    //       textBlocks:[],
+    //       textBlockMeta:null,
+    //     }
+    //   },
+
+    //   methods:{
+
+    //     nodeClick: async function(node){
+
+    //       if (imgUrls[node.id]){
+    //         this.pic =  imgUrls[node.id]
+    //       }else{
+    //         this.pic = '../img/person.png'
+    //       }
+
+          
+          
+
+    //       this.name = names[node.id]
+
+    //       this.display=true
+
+
+
+    //       this.$nextTick(() => {
+          
+
+    //         this.$refs.modal.classList.add('loading-gradient')
+          
+    //         let height = document.getElementById('modal').offsetHeight - document.getElementById('about').offsetHeight
+    //         document.getElementById('about-content').style.height = `${height+15}px`
+    //       });
+
+    //       this.modalInstructions="loading..."
+    //       this.blocksByAssoicated=[]
+    //       this.textBlocks=[]
+    //       this.textBlockMeta = null
+
+    //       this.mainCount='...'
+    //       this.blocksByAssoicated = await this.downloadBlockText(`${node.id}`)
+
+
+    //         this.$refs.modal.classList.add('loaded-gradient')
+
+
+    //       this.$refs.modal.classList.remove('loading-gradient')
+
+
+
+
+    //       let t = 0
+    //       for (let b of this.blocksByAssoicated){
+    //         t=t+b.blocks.length
+    //       }
+    //       this.mainCount = t + ' text blocks'
+
+
+    //       this.modalInstructions=`Below are the people who were mentioned with ${this.name} in archival documents. Click to show the text blocks they share.`
+
+
+    //       console.log(this.blocksByAssoicated)
+    //       console.log(imgUrls[node.id])
+    //       console.log(names[node.id])
+
+    //     },
+
+    //     back: function(){
+
+    //       this.textBlockMeta = null
+    //       this.blocksByAssoicated = this.blocksByAssoicatedOld
+    //       this.blocksByAssoicatedOld = []
+    //       this.textBlocks = []
+
+    //     },
+
+    //     showTextBlocks: function(b){
+    //       this.blocksByAssoicatedOld = this.blocksByAssoicated
+    //       this.blocksByAssoicated=[]
+    //       this.textBlocks=b.blocks;
+    //       this.textBlockMeta = b
+
+
+
+    //     },
+
+    //     normie: function(word){
+    //       console.log("TESTING",word)
+    //       if (word.length == 0){ return word}
+
+    //       word = word.split("'")[0]
+    //       word = word.split("’")[0]
+          
+          
+    //       word = word.replace(/'s/g,'')
+          
+    //       word = word.replace(/’s/g,'')          
+    //       word = word.replace(/\Ws/g,'')          
+          
+          
+    //       word = word.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()”“’]/g,"")
+          
+    //       return word.toLowerCase()
+    //     },
+
+    //     highlight: function(lookfor, lookin){
+
+    //       let textArrayResults = []
+
+    //       for (let t of lookin.split(' ')){
+    //         let foundIt = false
+
+    //         for (let w of lookfor.split(' ')){
+    //           if (this.normie(t) == this.normie(w)){
+    //             textArrayResults.push(`<span>${t}</span>`)
+    //             foundIt = true
+    //           }else if (t.includes('<br>')) {
+    //             let spliT = t.replace(/<br>/g,' ').split(' ')
+                
+    //             for (let tt of spliT){
+                  
+    //               if (this.normie(tt) == this.normie(w)){
+                    
+    //                 textArrayResults.push(`<span>${t}</span>`)
+    //                 foundIt = true
+
+    //               }
+    //             }
+
+
+
+
+    //           }
+    //         }
+
+    //         if (foundIt ==false){
+    //           textArrayResults.push(t)
+    //         }
+
+    //       }
+
+    //       return textArrayResults.join(' ')
+
+    //     },
+
+    //     loadText: async function(event,b){
+
+
+    //       let text = await fetch(b.textUrl, {headers: { 'charset' : 'utf-8'}})
+    //       text = await text.text()
+
+    //       text=text.replace(/\n/g,'<br><br>')
+
+    //       text = this.highlight(this.textBlockMeta.label,text)
+    //       text = this.highlight(this.name,text)
+
+    //       event.target.parentNode.innerHTML = text
+
+    //     },
+
+    //     downloadBlockText: async function(qid){
+    //       let sparql = `
+    //           select * { 
+    //             {select * where { 
+    //               ?block wdt:P21 wd:Q${qid}.
+    //             }}
+                              
+    //               ?block wdt:P19 ?text .
+    //               ?block wdt:P24 ?parentDoc .
+    //               ?parentDoc rdfs:label ?parentDocLabel. 
+    //               ?block wdt:P20 ?textUrl .
+    //               ?block wdt:P21 ?entity .
+    //               ?entity rdfs:label ?entityLabel. 
+    //               ?entity wdt:P1 wd:Q1.
+                
+    //           }
+    //       `
+
+    //       let blockTextData = await fetch('https://query.semlab.io/proxy/wdqs/bigdata/namespace/wdq/sparql?' + new URLSearchParams({
+    //           query: sparql
+    //       }), {headers: { 'Accept' : 'application/json'}})
+
+    //       blockTextData = await blockTextData.json()
+
+
+    //       let blocksByAssoicated = {}
+
+    //       for (let b of blockTextData.results.bindings){
+
+    //         if (parseInt(b.entity.value.split('/')[b.entity.value.split('/').length-1].replace('Q','')) != qid){
+
+
+    //           if (!blocksByAssoicated[b.entity.value]){ blocksByAssoicated[b.entity.value] = {
+    //             blocks: [],
+    //             label: b.entityLabel.value,
+    //             id: parseInt(b.entity.value.split('/')[b.entity.value.split('/').length-1].replace('Q','')),
+    //             img: imgUrls[parseInt(b.entity.value.split('/')[b.entity.value.split('/').length-1].replace('Q',''))]
+
+    //           } }
+
+    //           let canExpand = false
+    //           if (b.text.value.endsWith('...')){
+    //             canExpand=true
+    //           }
+
+
+
+    //           blocksByAssoicated[b.entity.value].blocks.push({
+    //             block: b.block.value,
+    //             doc: b.parentDoc.value,
+    //             docLabel: b.parentDocLabel.value,
+    //             text: b.text.value,
+    //             uri:b.entity.value,
+    //             textUrl: b.textUrl.value,
+    //             isMore: canExpand
+
+
+
+    //           })
+
+    //         }
+
+    //       }
+            
+    //       let blocksByAssoicatedArray = []
+    //       for (let key in blocksByAssoicated){
+    //         blocksByAssoicatedArray.push(blocksByAssoicated[key])
+    //       }
+
+
+    //       blocksByAssoicatedArray.sort(function(a,b) {
+    //           var x = a.label.toLowerCase();
+    //           var y = b.label.toLowerCase();
+    //           return x < y ? -1 : x > y ? 1 : 0;
+    //       });
+
+
+
+    //       return blocksByAssoicatedArray
+
+    //     }
+
+
+
+
+
+    //   }
+
+
+    // }).mount('#app')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // console.log(allData)
+
+    // // downloadBlockText()
+
+
+
+
+
+
+
+    // const gData = {
+    //   nodes: allData.nodes,
+    //   links: allData.links
+    // };
+
+    // const Graph = ForceGraph()
+    //   (document.getElementById('graph'))
+    //   .nodeCanvasObject((node, ctx, globalScale) => {
+
+
+
+
+    //     const size = 12;
+
+
+    //     if (node.img){
+
+    //       ctx.save();
+    //       ctx.beginPath();
+    //       ctx.arc(node.x, node.y, size/2, 0, 2 * Math.PI);         
+    //       ctx.clip();
+
+    //       ctx.drawImage(imgs[node.id], node.x - size / 2, node.y - size / 2, size, size);
+    //       ctx.restore();
+    //     }else{
+
+
+
+    //       ctx.beginPath();
+    //       ctx.arc(node.x, node.y, size/2.5, 0, 2 * Math.PI);
+    //       ctx.fillStyle = "white";
+    //       ctx.fill();          
+          
+
+
+    //       ctx.drawImage(personImg, node.x - size / 2, node.y - size / 2, size, size);
+
+
+    //       // ctx.fillStyle = 'blue';
+    //       // ctx.fillRect(node.x - size / 2, node.y - size / 2, size, size);
+    //     }
+               
+
+    //     if (globalScale>3){
+
+    //       const label = node.name;
+    //       const fontSize = 12/globalScale;
+    //       ctx.font = `${fontSize}px Sans-Serif`;
+    //       const textWidth = ctx.measureText(label).width;
+    //       const bckgDimensions = [textWidth, fontSize].map(n => n + fontSize * 0.2); // some padding
+
+    //       ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    //       ctx.fillRect(node.x - bckgDimensions[0] / 2, node.y - bckgDimensions[1] / 2 + size/2, ...bckgDimensions);
+
+    //       ctx.textAlign = 'center';
+    //       ctx.textBaseline = 'middle';
+    //       ctx.fillStyle = 'white';
+    //       ctx.fillText(label, node.x, node.y +  size/2);
+    //     }
+
+
+
+    //   })
+    //   .nodePointerAreaPaint((node, color, ctx) => {
+    //     const size = 12;
+    //     ctx.fillStyle =  color;
+    //     ctx.fillRect(node.x - size / 2, node.y - size / 2, size, size); // draw square as pointer trap
+    //   })
+    //   // .linkColor(() => 'whitesmoke')
+    //   .linkWidth(() => 0.25)
+    //   // .linkCurvature(() => 1)
+    //   .onNodeClick((node,event)=> {
+
+    //     vueApp.nodeClick(node)
+
+    //   })
+    //   .onZoom(()=>{
+    //     zoomCount++
+    //     if (zoomCount>2){          
+    //       document.getElementById('title').style.opacity=0;
+    //     }
+    //   })
+      
+    //   // .d3AlphaDecay(0.05)
+    //   .graphData(gData);
+
+
+  </script>
+</body>

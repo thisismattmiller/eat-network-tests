@@ -1,0 +1,79 @@
+<head>
+  <style> body { margin: 0; } </style>
+
+  <script src="//unpkg.com/three"></script>
+
+  <script src="//unpkg.com/3d-force-graph"></script>
+  <!--<script src="../../dist/3d-force-graph.js"></script>-->
+  <script src="../people_network.js"></script>
+
+
+</head>
+
+<body>
+  <div id="3d-graph"></div>
+
+  <script>
+
+
+    let imgs = {}
+    let imgUrls = {}
+    let names = {}
+
+    for (let img of allData.nodes){
+      imgUrls[img.id] = img.img
+      names[img.id] = img.name
+      if (img.img){        
+        const imgEl = new Image();
+        imgEl.src = img.img;
+        imgs[img.id] = imgEl
+      }
+
+    }
+
+
+
+
+    // Random connected graph
+    // const gData = {
+    //   nodes: imgs.map((img, id) => ({ id, img })),
+    //   links: [...Array(imgs.length).keys()]
+    //     .filter(id => id)
+    //     .map(id => ({
+    //       source: id,
+    //       target: Math.round(Math.random() * (id-1))
+    //     }))
+    // };
+
+    const gData = {
+      nodes: allData.nodes,
+      links: allData.links
+    };
+
+
+
+    let Graph = ForceGraph3D()
+      (document.getElementById('3d-graph'))
+      .nodeThreeObject((node) => {
+
+        console.log(node)
+        let imgTexture
+        if (node.img){
+          imgTexture = new THREE.TextureLoader().load(node.img);
+        }else{
+          imgTexture = new THREE.TextureLoader().load('../img/person_white.png');
+        }
+        let material = new THREE.SpriteMaterial({ map: imgTexture });
+        material.transparent = true
+        material.needsUpdate = true        
+        const sprite = new THREE.Sprite(material);
+        sprite.scale.set(12, 12);
+        return sprite;
+      })
+      .linkOpacity(0.05)
+
+      .graphData(gData);
+
+      Graph.d3Force('link').distance(link => 300)
+  </script>
+</body>
