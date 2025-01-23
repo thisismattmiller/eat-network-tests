@@ -235,11 +235,21 @@ background: linear-gradient(180deg, rgba(255,255,255,1) 27%, rgba(50,50,50,1) 10
 
 
       let sparql = `
+
         select * { 
-          {select * where { 
-            ?artwork wdt:P1 wd:Q19073.
+          {select * where {             
+            VALUES ?useTypes
+            {
+               wd:Q19073
+               wd:Q19074
+            }            
+            ?artwork wdt:P1 ?useTypes.
             ?artwork wdt:P11 wd:Q19104.
             ?artwork rdfs:label ?artworkLabel.
+             optional{
+             ?artwork wdt:P128 ?performanceInstance.
+            }   
+
           }}
           
 
@@ -275,15 +285,19 @@ background: linear-gradient(180deg, rgba(255,255,255,1) 27%, rgba(50,50,50,1) 10
       let data = await dataReq.json()
 
 
+      // console.log("data.results.bindings",data.results.bindings)
+      // Remove the orginal artwork if they have a performance instance.
+      data.results.bindings = data.results.bindings.filter((v) => { return (!v['performanceInstance'])})
+
       let blocksByAssoicated = {}
 
       let artworks = {}
-      let relationships = {}
+      // let relationships = {}
 
       for (let b of data.results.bindings){
-        console.log(b)
+
         let artworkId = parseInt(b.artwork.value.split('/')[b.artwork.value.split('/').length-1].replace('Q',''))
-        console.log(artworkId)
+
         if (!artworks[artworkId]){
           artworks[artworkId] = {
             id: artworkId,
@@ -331,7 +345,7 @@ background: linear-gradient(180deg, rgba(255,255,255,1) 27%, rgba(50,50,50,1) 10
 
         }
       }
-
+      console.log('artworks',artworks)
       let nodesAdded = {}
       let linksAdded = {}
      
@@ -433,9 +447,17 @@ background: linear-gradient(180deg, rgba(255,255,255,1) 27%, rgba(50,50,50,1) 10
         nodes: allData.nodes,
         links: allData.links
       };
+// myGraph.d3Force('link').distance(link => /* your code */)
+      // console.log(ForceGraph().d3Force)
+      const Graph = ForceGraph();
 
-      const Graph = ForceGraph()
-        (document.getElementById('graph'))
+        Graph.d3Force('link').distance(link => {return 30})
+
+        Graph.d3Force('charge').strength(-100);
+
+        // Graph.d3Force.alphaDecay(0.5)
+        console.log('Graph.d3Force',Graph.d3Force.forceSimulation)
+        Graph(document.getElementById('graph'))
         .nodeCanvasObject((node, ctx, globalScale) => {
 
 
@@ -573,6 +595,7 @@ background: linear-gradient(180deg, rgba(255,255,255,1) 27%, rgba(50,50,50,1) 10
             document.getElementById('title').style.opacity=0;
           }
         })
+
         
         // .d3AlphaDecay(0.05)
         .graphData(gData);
