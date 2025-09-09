@@ -253,9 +253,9 @@ background: linear-gradient(180deg, rgba(255,255,255,1) 27%, rgba(50,50,50,1) 10
           }}
           
 
-          ?artwork wdt:P74 ?creator.
-          ?creator rdfs:label ?creatorLabel.
           optional{
+            ?artwork wdt:P74 ?creator.
+            ?creator rdfs:label ?creatorLabel.
             ?creator wdt:P3 ?creatorImg.
           }  
           
